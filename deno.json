@@ -1,7 +1,8 @@
 {
   "tasks": {
     "dev": "deno run --watch main.ts",
-    "test": "deno task check && deno test --allow-read --allow-net --allow-env",
+    "test": "deno task check && deno test --allow-read --allow-net --allow-env --allow-run --no-check",
+    "test-unsafe": "deno test --allow-read --allow-net --allow-env --allow-run --no-check --allow-hrtime",
     "check": "deno check main.ts"
   },
   "imports": {
