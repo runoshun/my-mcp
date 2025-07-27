@@ -31,12 +31,27 @@ deno task test
 deno task test-unsafe
 ```
 
+### Running with mise
+
+If Deno is not in your PATH, use mise to run commands:
+
+```bash
+# Install Deno via mise
+mise install deno
+
+# Run commands with mise exec
+mise exec deno -- deno task test
+mise exec deno -- deno task check
+mise exec deno -- deno task dev
+```
+
 ## Required Permissions
 
 The server requires these Deno permissions:
 - `--allow-read`: Reading configuration files
 - `--allow-env`: Accessing environment variables (PATH)
 - `--allow-run`: Spawning Gemini CLI subprocess
+- `--allow-write`: Required for tests that write configuration files
 
 ## Testing
 

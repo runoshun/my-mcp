@@ -68,7 +68,7 @@ export class ModularMCPServer {
       for (const [, module] of this.toolRegistry) {
         const definition = module.getToolDefinition();
         if (definition.tool.name === name) {
-          return await definition.execute(args);
+          return await definition.execute(args || {});
         }
       }
       

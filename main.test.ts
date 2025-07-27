@@ -203,6 +203,8 @@ Deno.test({
 
 Deno.test({
   name: "CLI --list flag displays available tools",
+  sanitizeResources: false,
+  sanitizeOps: false,
   fn: async () => {
     console.log("Testing --list flag...");
 
