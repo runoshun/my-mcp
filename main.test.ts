@@ -29,8 +29,10 @@ Deno.test({
       await client.connect(transport);
 
       const toolsResponse = await client.listTools();
-      assertEquals(toolsResponse.tools.length, 1);
-      assertEquals(toolsResponse.tools[0].name, "gemini_search");
+      assertEquals(toolsResponse.tools.length, 3);
+      
+      const toolNames = toolsResponse.tools.map(tool => tool.name).sort();
+      assertEquals(toolNames, ["gemini_search", "terminal_close", "terminal_execute"]);
       console.log("Default configuration test passed ✓");
     } finally {
       await client.close();
@@ -180,10 +182,11 @@ Deno.test({
     try {
       await client.connect(transport);
 
+      // Test terminal_execute tool since it's more reliable than gemini_search
       try {
         const callResult = await client.callTool({
-          name: "gemini_search",
-          arguments: { query: "test query" },
+          name: "terminal_execute",
+          arguments: { keys: "echo test", sendEnter: true, readWait: 500 },
         });
 
         assertExists(callResult.content);
@@ -193,7 +196,7 @@ Deno.test({
         assertEquals(typeof callResult.content[0].text, "string");
         console.log("Tool execution test passed ✓");
       } catch (error) {
-        console.log("Tool execution test skipped (Gemini CLI not available)");
+        console.log("Tool execution test skipped (tmux not available)");
       }
     } finally {
       await client.close();
@@ -228,7 +231,10 @@ Deno.test({
     assertEquals(code, 0);
     assertEquals(output.includes("Available tools:"), true);
     assertEquals(output.includes("gemini-search"), true);
+    assertEquals(output.includes("terminal"), true);
+    assertEquals(output.includes("terminal-close"), true);
     assertEquals(output.includes("Search the web and get summaries using Gemini CLI"), true);
+    assertEquals(output.includes("Interactive terminal session management using tmux"), true);
     console.log("--list flag test passed ✓");
   },
 });

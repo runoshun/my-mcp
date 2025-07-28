@@ -2,9 +2,12 @@ import { ModularMCPServer } from "./server.ts";
 import { parseCliArgs, mergeConfigs } from "./config.ts";
 import { ToolModule } from "./tools/tool-interface.ts";
 import { geminiSearchTool } from "./tools/gemini-search.ts";
+import { terminalTool, terminalCloseTool } from "./tools/terminal.ts";
 
 const AVAILABLE_TOOLS = new Map<string, ToolModule>([
   [geminiSearchTool.id, geminiSearchTool],
+  [terminalTool.id, terminalTool],
+  [terminalCloseTool.id, terminalCloseTool],
 ]);
 
 function printUsage() {
