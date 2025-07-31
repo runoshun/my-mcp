@@ -1,2 +1,5 @@
 # Agent workspaces (auto-generated)
 .agent-workspaces/
+
+# Test coverage
+coverage/
