@@ -213,7 +213,7 @@ function getKnowledgeGraphManager(): KnowledgeGraphManager {
 // Tool definitions
 export const createEntitiesToolDefinition: ToolDefinition = {
   tool: {
-    name: "create_entities",
+    name: "memory_create_entities",
     description: "Create multiple new entities in the knowledge graph",
     inputSchema: {
       type: "object",
@@ -261,7 +261,7 @@ export const createEntitiesToolDefinition: ToolDefinition = {
 
 export const createRelationsToolDefinition: ToolDefinition = {
   tool: {
-    name: "create_relations",
+    name: "memory_create_relations",
     description:
       "Create multiple new relations between entities in the knowledge graph. Relations should be in active voice",
     inputSchema: {
@@ -308,7 +308,7 @@ export const createRelationsToolDefinition: ToolDefinition = {
 
 export const addObservationsToolDefinition: ToolDefinition = {
   tool: {
-    name: "add_observations",
+    name: "memory_add_observations",
     description:
       "Add new observations to existing entities in the knowledge graph",
     inputSchema: {
@@ -355,7 +355,7 @@ export const addObservationsToolDefinition: ToolDefinition = {
 
 export const deleteEntitiesToolDefinition: ToolDefinition = {
   tool: {
-    name: "delete_entities",
+    name: "memory_delete_entities",
     description:
       "Delete multiple entities and their associated relations from the knowledge graph",
     inputSchema: {
@@ -386,7 +386,7 @@ export const deleteEntitiesToolDefinition: ToolDefinition = {
 
 export const deleteObservationsToolDefinition: ToolDefinition = {
   tool: {
-    name: "delete_observations",
+    name: "memory_delete_observations",
     description:
       "Delete specific observations from entities in the knowledge graph",
     inputSchema: {
@@ -431,7 +431,7 @@ export const deleteObservationsToolDefinition: ToolDefinition = {
 
 export const deleteRelationsToolDefinition: ToolDefinition = {
   tool: {
-    name: "delete_relations",
+    name: "memory_delete_relations",
     description: "Delete multiple relations from the knowledge graph",
     inputSchema: {
       type: "object",
@@ -478,7 +478,7 @@ export const deleteRelationsToolDefinition: ToolDefinition = {
 
 export const readGraphToolDefinition: ToolDefinition = {
   tool: {
-    name: "read_graph",
+    name: "memory_read_graph",
     description: "Read the entire knowledge graph",
     inputSchema: {
       type: "object",
@@ -500,7 +500,7 @@ export const readGraphToolDefinition: ToolDefinition = {
 
 export const searchNodesToolDefinition: ToolDefinition = {
   tool: {
-    name: "search_nodes",
+    name: "memory_search_nodes",
     description: "Search for nodes in the knowledge graph based on a query",
     inputSchema: {
       type: "object",
@@ -530,7 +530,7 @@ export const searchNodesToolDefinition: ToolDefinition = {
 
 export const openNodesToolDefinition: ToolDefinition = {
   tool: {
-    name: "open_nodes",
+    name: "memory_open_nodes",
     description: "Open specific nodes in the knowledge graph by their names",
     inputSchema: {
       type: "object",
