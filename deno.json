@@ -6,7 +6,6 @@
     "check": "deno fmt && deno lint; deno check **/*.ts"
   },
   "imports": {
-    "@modelcontextprotocol/sdk": "npm:@modelcontextprotocol/sdk@^1.15.1",
     "@std/assert": "jsr:@std/assert@1"
   }
 }

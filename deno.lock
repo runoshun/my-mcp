@@ -512,8 +512,7 @@
   },
   "workspace": {
     "dependencies": [
-      "jsr:@std/assert@1",
-      "npm:@modelcontextprotocol/sdk@^1.15.1"
+      "jsr:@std/assert@1"
     ]
   }
 }

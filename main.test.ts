@@ -1,6 +1,5 @@
 import { assertEquals, assertExists } from "@std/assert";
-import { Client } from "@modelcontextprotocol/sdk/client/index.js";
-import { StdioClientTransport } from "@modelcontextprotocol/sdk/client/stdio.js";
+import { Client, StdioClientTransport } from "./deps/mcp-sdk.ts";
 import { AVAILABLE_TOOLS } from "./tools/mod.ts";
 
 Deno.test({

@@ -1,9 +1,9 @@
-import { Server } from "@modelcontextprotocol/sdk/server/index.js";
-import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import {
   CallToolRequestSchema,
   ListToolsRequestSchema,
-} from "@modelcontextprotocol/sdk/types.js";
+  Server,
+  StdioServerTransport,
+} from "./deps/mcp-sdk.ts";
 
 import { ToolModule, ToolRegistry } from "./tools/tool-interface.ts";
 import { AVAILABLE_TOOLS } from "./tools/mod.ts";

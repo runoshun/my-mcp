@@ -1,5 +1,5 @@
 import { ToolModule } from "./tool-interface.ts";
-import { CallToolResult } from "@modelcontextprotocol/sdk/types.js";
+import { CallToolResult } from "../deps/mcp-sdk.ts";
 
 interface TerminalSession {
   name: string;

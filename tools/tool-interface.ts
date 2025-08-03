@@ -1,4 +1,4 @@
-import { CallToolResult, Tool } from "@modelcontextprotocol/sdk/types.js";
+import { CallToolResult, Tool } from "../deps/mcp-sdk.ts";
 
 export interface TextContent {
   type: "text";
