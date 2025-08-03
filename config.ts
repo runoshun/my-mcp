@@ -15,21 +15,25 @@ export async function loadConfigFile(path: string): Promise<ConfigFile> {
     const content = await Deno.readTextFile(path);
     return JSON.parse(content);
   } catch (error) {
-    throw new Error(`Failed to load config file: ${error instanceof Error ? error.message : String(error)}`);
+    throw new Error(
+      `Failed to load config file: ${
+        error instanceof Error ? error.message : String(error)
+      }`,
+    );
   }
 }
 
 export function parseCliArgs(args: string[]): ServerConfig {
   const config: ServerConfig = {};
-  
+
   for (let i = 0; i < args.length; i++) {
     const arg = args[i];
-    
+
     switch (arg) {
       case "--tools":
       case "-t":
         if (i + 1 < args.length) {
-          config.tools = args[++i].split(",").map(t => t.trim());
+          config.tools = args[++i].split(",").map((t) => t.trim());
         }
         break;
       case "--config":
@@ -44,20 +48,22 @@ export function parseCliArgs(args: string[]): ServerConfig {
         break;
     }
   }
-  
+
   return config;
 }
 
-export async function mergeConfigs(cliConfig: ServerConfig): Promise<ServerConfig> {
+export async function mergeConfigs(
+  cliConfig: ServerConfig,
+): Promise<ServerConfig> {
   const finalConfig: ServerConfig = { ...cliConfig };
-  
+
   if (cliConfig.configFile) {
     const fileConfig = await loadConfigFile(cliConfig.configFile);
-    
+
     if (!finalConfig.tools && fileConfig.tools) {
       finalConfig.tools = fileConfig.tools;
     }
   }
-  
+
   return finalConfig;
 }

@@ -44,6 +44,7 @@ class TerminalManager {
         args: ["-S", this.socketPath, "has-session", "-t", sessionName],
         stdout: "piped",
         stderr: "piped",
+        env: Deno.env.toObject(),
       });
       const { code } = await process.output();
       return code === 0;
@@ -70,7 +71,7 @@ class TerminalManager {
     }
 
     // Wait a bit for session to be ready
-    await new Promise(resolve => setTimeout(resolve, 100));
+    await new Promise((resolve) => setTimeout(resolve, 100));
   }
 
   private async getOrCreateSession(sessionName?: string): Promise<string> {
@@ -98,19 +99,47 @@ class TerminalManager {
     return sessionName;
   }
 
-  private async sendKeysToSession(sessionName: string, keys: string): Promise<void> {
+  private async sendKeysToSession(
+    sessionName: string,
+    keys: string,
+  ): Promise<void> {
     if (!this.socketPath) {
       throw new Error("Socket path not initialized");
     }
 
     // Check if keys contain special key notations
     const specialKeys = [
-      "C-", "M-", "F1", "F2", "F3", "F4", "F5", "F6", "F7", "F8", "F9", "F10", "F11", "F12",
-      "Up", "Down", "Left", "Right", "Home", "End", "PageUp", "PageDown", "Escape", "Tab", 
-      "BSpace", "DC", "IC", "Enter"
+      "C-",
+      "M-",
+      "F1",
+      "F2",
+      "F3",
+      "F4",
+      "F5",
+      "F6",
+      "F7",
+      "F8",
+      "F9",
+      "F10",
+      "F11",
+      "F12",
+      "Up",
+      "Down",
+      "Left",
+      "Right",
+      "Home",
+      "End",
+      "PageUp",
+      "PageDown",
+      "Escape",
+      "Tab",
+      "BSpace",
+      "DC",
+      "IC",
+      "Enter",
     ];
 
-    const isSpecialKey = specialKeys.some(prefix => keys.includes(prefix));
+    const isSpecialKey = specialKeys.some((prefix) => keys.includes(prefix));
 
     const args = ["-S", this.socketPath, "send-keys", "-t", sessionName];
     if (!isSpecialKey && keys) {
@@ -127,7 +156,9 @@ class TerminalManager {
     const { code, stderr } = await process.output();
     if (code !== 0) {
       const error = new TextDecoder().decode(stderr);
-      throw new Error(`Failed to send keys to session ${sessionName}: ${error}`);
+      throw new Error(
+        `Failed to send keys to session ${sessionName}: ${error}`,
+      );
     }
   }
 
@@ -145,7 +176,9 @@ class TerminalManager {
     const { code, stdout, stderr } = await process.output();
     if (code !== 0) {
       const error = new TextDecoder().decode(stderr);
-      throw new Error(`Failed to capture screen for session ${sessionName}: ${error}`);
+      throw new Error(
+        `Failed to capture screen for session ${sessionName}: ${error}`,
+      );
     }
 
     const output = new TextDecoder().decode(stdout);
@@ -156,7 +189,7 @@ class TerminalManager {
     sessionName: string | undefined,
     keys: string,
     readWait: number,
-    sendEnter: boolean
+    sendEnter: boolean,
   ): Promise<{ sessionName: string; output: string }> {
     const actualSessionName = await this.getOrCreateSession(sessionName);
 
@@ -170,7 +203,9 @@ class TerminalManager {
       }
 
       // Wait for command to execute
-      await new Promise(resolve => setTimeout(resolve, Math.min(readWait, 30000)));
+      await new Promise((resolve) =>
+        setTimeout(resolve, Math.min(readWait, 30000))
+      );
     }
 
     const output = await this.captureOutput(actualSessionName);
@@ -236,7 +271,8 @@ export const terminalTool: ToolModule = {
   getToolDefinition: () => ({
     tool: {
       name: "terminal_execute",
-      description: `Provides an interactive terminal session for executing commands or capturing output.
+      description:
+        `Provides an interactive terminal session for executing commands or capturing output.
 
 Key features:
   - Send keys to a tmux session and capture the resulting output.
@@ -270,16 +306,19 @@ Best practices:
           },
           readWait: {
             type: "number",
-            description: "Time to wait for output before capturing in milliseconds. Default is 1000 (ms). Max is 30000 (ms).",
+            description:
+              "Time to wait for output before capturing in milliseconds. Default is 1000 (ms). Max is 30000 (ms).",
             default: 1000,
           },
           keys: {
             type: "string",
-            description: "The key-strokes to send to the terminal. If empty, only captures the current output.",
+            description:
+              "The key-strokes to send to the terminal. If empty, only captures the current output.",
           },
           sendEnter: {
             type: "boolean",
-            description: "Whether to send an Enter key (newline) after the keys. Useful when Claude Code trims trailing newlines.",
+            description:
+              "Whether to send an Enter key (newline) after the keys. Useful when Claude Code trims trailing newlines.",
             default: false,
           },
         },
@@ -289,7 +328,12 @@ Best practices:
 
     execute: async (args) => {
       try {
-        const { sessionName, readWait = 1000, keys = "", sendEnter = false } = args as {
+        const {
+          sessionName,
+          readWait = 1000,
+          keys = "",
+          sendEnter = false,
+        } = args as {
           sessionName?: string;
           readWait?: number;
           keys?: string;
@@ -297,9 +341,14 @@ Best practices:
         };
 
         const manager = TerminalManager.getInstance();
-        const result = await manager.sendKeysAndCapture(sessionName, keys, readWait, sendEnter);
+        const result = await manager.sendKeysAndCapture(
+          sessionName,
+          keys,
+          readWait,
+          sendEnter,
+        );
 
-        const resultMsg = keys === "" 
+        const resultMsg = keys === ""
           ? "Terminal output captured successfully\n"
           : "Keys sent successfully\n";
 
@@ -307,7 +356,8 @@ Best practices:
           content: [
             {
               type: "text",
-              text: `${resultMsg}Session Name: ${result.sessionName}\nTerminal Output:\n\`\`\`\n${result.output}\n\`\`\``,
+              text:
+                `${resultMsg}Session Name: ${result.sessionName}\nTerminal Output:\n\`\`\`\n${result.output}\n\`\`\``,
             },
           ],
         } as CallToolResult;

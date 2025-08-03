@@ -1,5 +1,7 @@
 import { assertEquals, assertStringIncludes } from "@std/assert";
-import { terminalTool, terminalCloseTool } from "./terminal.ts";
+import { terminalCloseTool, terminalTool } from "./terminal.ts";
+
+type TextContent = { type: string; text: string };
 
 // Helper function to check if tmux is available
 async function isTmuxAvailable(): Promise<boolean> {
@@ -16,11 +18,11 @@ async function isTmuxAvailable(): Promise<boolean> {
   }
 }
 
-Deno.test("terminal tool validation", async () => {
+Deno.test("terminal tool validation", () => {
   const terminalToolDef = terminalTool.getToolDefinition();
   assertEquals(terminalToolDef.tool.name, "terminal_execute");
   assertEquals(typeof terminalToolDef.execute, "function");
-  
+
   const closeToolDef = terminalCloseTool.getToolDefinition();
   assertEquals(closeToolDef.tool.name, "terminal_close");
   assertEquals(typeof closeToolDef.execute, "function");
@@ -46,7 +48,7 @@ Deno.test("terminal execute - capture without sending keys", async () => {
   }
 
   const terminalToolDef = terminalTool.getToolDefinition();
-  
+
   // Test capturing output without sending keys
   const result = await terminalToolDef.execute({
     sessionName: "test-session-capture",
@@ -56,8 +58,14 @@ Deno.test("terminal execute - capture without sending keys", async () => {
 
   assertEquals(result.content?.length, 1);
   assertEquals(result.content?.[0].type, "text");
-  assertStringIncludes(result.content?.[0].text || "", "Terminal output captured successfully");
-  assertStringIncludes(result.content?.[0].text || "", "Session Name: test-session-capture");
+  assertStringIncludes(
+    (result.content as TextContent[])?.[0]?.text || "",
+    "Terminal output captured successfully",
+  );
+  assertStringIncludes(
+    (result.content as TextContent[])?.[0]?.text || "",
+    "Session Name: test-session-capture",
+  );
 
   // Clean up session
   const closeToolDef = terminalCloseTool.getToolDefinition();
@@ -72,7 +80,7 @@ Deno.test("terminal execute - send command and capture", async () => {
   }
 
   const terminalToolDef = terminalTool.getToolDefinition();
-  
+
   // Test sending a command
   const result = await terminalToolDef.execute({
     sessionName: "test-session-command",
@@ -83,9 +91,18 @@ Deno.test("terminal execute - send command and capture", async () => {
 
   assertEquals(result.content?.length, 1);
   assertEquals(result.content?.[0].type, "text");
-  assertStringIncludes(result.content?.[0].text || "", "Keys sent successfully");
-  assertStringIncludes(result.content?.[0].text || "", "Session Name: test-session-command");
-  assertStringIncludes(result.content?.[0].text || "", "Hello World");
+  assertStringIncludes(
+    (result.content as TextContent[])?.[0]?.text || "",
+    "Keys sent successfully",
+  );
+  assertStringIncludes(
+    (result.content as TextContent[])?.[0]?.text || "",
+    "Session Name: test-session-command",
+  );
+  assertStringIncludes(
+    (result.content as TextContent[])?.[0]?.text || "",
+    "Hello World",
+  );
 
   // Clean up session
   const closeToolDef = terminalCloseTool.getToolDefinition();
@@ -100,7 +117,7 @@ Deno.test("terminal execute - auto-generated session name", async () => {
   }
 
   const terminalToolDef = terminalTool.getToolDefinition();
-  
+
   // Test without providing session name
   const result = await terminalToolDef.execute({
     keys: "pwd",
@@ -110,12 +127,18 @@ Deno.test("terminal execute - auto-generated session name", async () => {
 
   assertEquals(result.content?.length, 1);
   assertEquals(result.content?.[0].type, "text");
-  assertStringIncludes(result.content?.[0].text || "", "Keys sent successfully");
-  assertStringIncludes(result.content?.[0].text || "", "Session Name: ai-terminal-");
+  assertStringIncludes(
+    (result.content as TextContent[])?.[0]?.text || "",
+    "Keys sent successfully",
+  );
+  assertStringIncludes(
+    (result.content as TextContent[])?.[0]?.text || "",
+    "Session Name: ai-terminal-",
+  );
 
   // Extract session name for cleanup
-  const text = result.content?.[0].text || "";
-  const sessionNameMatch = text.match(/Session Name: ([\w-]+)/);
+  const text = (result.content as TextContent[])?.[0]?.text || "";
+  const sessionNameMatch = (text as string).match(/Session Name: ([\w-]+)/);
   if (sessionNameMatch) {
     const closeToolDef = terminalCloseTool.getToolDefinition();
     await closeToolDef.execute({ sessionName: sessionNameMatch[1] });
@@ -131,7 +154,7 @@ Deno.test("terminal execute - session persistence", async () => {
 
   const terminalToolDef = terminalTool.getToolDefinition();
   const sessionName = "test-session-persist";
-  
+
   // First command - change directory to /tmp
   await terminalToolDef.execute({
     sessionName,
@@ -149,7 +172,10 @@ Deno.test("terminal execute - session persistence", async () => {
   });
 
   assertEquals(result.content?.length, 1);
-  assertStringIncludes(result.content?.[0].text || "", "/tmp");
+  assertStringIncludes(
+    (result.content as TextContent[])?.[0]?.text || "",
+    "/tmp",
+  );
 
   // Clean up session
   const closeToolDef = terminalCloseTool.getToolDefinition();
@@ -165,7 +191,7 @@ Deno.test("terminal execute - special keys", async () => {
 
   const terminalToolDef = terminalTool.getToolDefinition();
   const sessionName = "test-session-special";
-  
+
   // Test sending Ctrl+C (should interrupt any running command)
   const result = await terminalToolDef.execute({
     sessionName,
@@ -174,7 +200,10 @@ Deno.test("terminal execute - special keys", async () => {
   });
 
   assertEquals(result.content?.length, 1);
-  assertStringIncludes(result.content?.[0].text || "", "Keys sent successfully");
+  assertStringIncludes(
+    (result.content as TextContent[])?.[0]?.text || "",
+    "Keys sent successfully",
+  );
 
   // Clean up session
   const closeToolDef = terminalCloseTool.getToolDefinition();
@@ -191,7 +220,7 @@ Deno.test("terminal close - valid session", async () => {
   const terminalToolDef = terminalTool.getToolDefinition();
   const closeToolDef = terminalCloseTool.getToolDefinition();
   const sessionName = "test-session-close";
-  
+
   // Create a session first
   await terminalToolDef.execute({
     sessionName,
@@ -204,18 +233,24 @@ Deno.test("terminal close - valid session", async () => {
 
   assertEquals(result.content?.length, 1);
   assertEquals(result.content?.[0].type, "text");
-  assertStringIncludes(result.content?.[0].text || "", `Terminal session ${sessionName} closed successfully`);
+  assertStringIncludes(
+    (result.content as TextContent[])?.[0]?.text || "",
+    `Terminal session ${sessionName} closed successfully`,
+  );
 });
 
 Deno.test("terminal close - missing session name", async () => {
   const closeToolDef = terminalCloseTool.getToolDefinition();
-  
+
   // Try to close without session name
   const result = await closeToolDef.execute({});
 
   assertEquals(result.content?.length, 1);
   assertEquals(result.content?.[0].type, "text");
-  assertStringIncludes(result.content?.[0].text || "", "Error: sessionName is required");
+  assertStringIncludes(
+    (result.content as TextContent[])?.[0]?.text || "",
+    "Error: sessionName is required",
+  );
 });
 
 Deno.test("terminal close - non-existent session", async () => {
@@ -226,13 +261,18 @@ Deno.test("terminal close - non-existent session", async () => {
   }
 
   const closeToolDef = terminalCloseTool.getToolDefinition();
-  
+
   // Try to close a non-existent session
-  const result = await closeToolDef.execute({ sessionName: "non-existent-session" });
+  const result = await closeToolDef.execute({
+    sessionName: "non-existent-session",
+  });
 
   assertEquals(result.content?.length, 1);
   assertEquals(result.content?.[0].type, "text");
-  assertStringIncludes(result.content?.[0].text || "", "Error closing terminal session");
+  assertStringIncludes(
+    (result.content as TextContent[])?.[0]?.text || "",
+    "Error closing terminal session",
+  );
 });
 
 Deno.test("terminal execute - default parameters", async () => {
@@ -243,17 +283,20 @@ Deno.test("terminal execute - default parameters", async () => {
   }
 
   const terminalToolDef = terminalTool.getToolDefinition();
-  
+
   // Test with minimal parameters
   const result = await terminalToolDef.execute({});
 
   assertEquals(result.content?.length, 1);
   assertEquals(result.content?.[0].type, "text");
-  assertStringIncludes(result.content?.[0].text || "", "Terminal output captured successfully");
+  assertStringIncludes(
+    (result.content as TextContent[])?.[0]?.text || "",
+    "Terminal output captured successfully",
+  );
 
   // Extract session name for cleanup
-  const text = result.content?.[0].text || "";
-  const sessionNameMatch = text.match(/Session Name: ([\w-]+)/);
+  const text = (result.content as TextContent[])?.[0]?.text || "";
+  const sessionNameMatch = (text as string).match(/Session Name: ([\w-]+)/);
   if (sessionNameMatch) {
     const closeToolDef = terminalCloseTool.getToolDefinition();
     await closeToolDef.execute({ sessionName: sessionNameMatch[1] });
@@ -269,7 +312,7 @@ Deno.test("terminal execute - readWait parameter bounds", async () => {
 
   const terminalToolDef = terminalTool.getToolDefinition();
   const sessionName = "test-session-readwait";
-  
+
   // Test with large readWait value (should be capped at 30000ms)
   const start = Date.now();
   await terminalToolDef.execute({
@@ -279,7 +322,7 @@ Deno.test("terminal execute - readWait parameter bounds", async () => {
     readWait: 50000, // Should be capped at 30000
   });
   const elapsed = Date.now() - start;
-  
+
   // Should not take more than 35 seconds (allowing some buffer)
   assertEquals(elapsed < 35000, true);
 
@@ -296,7 +339,7 @@ Deno.test("terminal cleanup", async () => {
   if (terminalCloseTool.cleanup) {
     await terminalCloseTool.cleanup();
   }
-  
+
   // No assertion needed - just verify it doesn't throw
   assertEquals(true, true);
 });

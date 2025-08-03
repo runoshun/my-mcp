@@ -3,7 +3,7 @@
     "dev": "deno run --watch --allow-read --allow-write --allow-env --allow-run main.ts",
     "test": "deno task check && deno test --allow-read --allow-write --allow-net --allow-env --allow-run --no-check",
     "test-unsafe": "deno test --allow-read --allow-write --allow-net --allow-env --allow-run --no-check --allow-hrtime",
-    "check": "deno check main.ts"
+    "check": "deno fmt && deno lint; deno check **/*.ts"
   },
   "imports": {
     "@modelcontextprotocol/sdk": "npm:@modelcontextprotocol/sdk@^1.15.1",

@@ -1,4 +1,9 @@
-import { Tool, CallToolResult } from "@modelcontextprotocol/sdk/types.js";
+import { CallToolResult, Tool } from "@modelcontextprotocol/sdk/types.js";
+
+export interface TextContent {
+  type: "text";
+  text: string;
+}
 
 export interface ToolDefinition {
   tool: Tool;

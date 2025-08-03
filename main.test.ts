@@ -30,9 +30,13 @@ Deno.test({
 
       const toolsResponse = await client.listTools();
       assertEquals(toolsResponse.tools.length, 3);
-      
-      const toolNames = toolsResponse.tools.map(tool => tool.name).sort();
-      assertEquals(toolNames, ["gemini_search", "terminal_close", "terminal_execute"]);
+
+      const toolNames = toolsResponse.tools.map((tool) => tool.name).sort();
+      assertEquals(toolNames, [
+        "gemini_search",
+        "terminal_close",
+        "terminal_execute",
+      ]);
       console.log("Default configuration test passed ✓");
     } finally {
       await client.close();
@@ -49,7 +53,15 @@ Deno.test({
 
     const transport = new StdioClientTransport({
       command: "deno",
-      args: ["run", "--allow-read", "--allow-env", "--allow-run", "main.ts", "--tools", "gemini-search"],
+      args: [
+        "run",
+        "--allow-read",
+        "--allow-env",
+        "--allow-run",
+        "main.ts",
+        "--tools",
+        "gemini-search",
+      ],
       env: { PATH: Deno.env.get("PATH") || "" },
     });
 
@@ -85,7 +97,15 @@ Deno.test({
 
     const transport = new StdioClientTransport({
       command: "deno",
-      args: ["run", "--allow-read", "--allow-env", "--allow-run", "main.ts", "--tools", "non-existent"],
+      args: [
+        "run",
+        "--allow-read",
+        "--allow-env",
+        "--allow-run",
+        "main.ts",
+        "--tools",
+        "non-existent",
+      ],
       env: { PATH: Deno.env.get("PATH") || "" },
     });
 
@@ -119,14 +139,25 @@ Deno.test({
     console.log("Testing config file loading...");
 
     const configPath = "./test-config.json";
-    await Deno.writeTextFile(configPath, JSON.stringify({
-      tools: ["gemini-search"],
-    }));
+    await Deno.writeTextFile(
+      configPath,
+      JSON.stringify({
+        tools: ["gemini-search"],
+      }),
+    );
 
     try {
       const transport = new StdioClientTransport({
         command: "deno",
-        args: ["run", "--allow-read", "--allow-env", "--allow-run", "main.ts", "--config", configPath],
+        args: [
+          "run",
+          "--allow-read",
+          "--allow-env",
+          "--allow-run",
+          "main.ts",
+          "--config",
+          configPath,
+        ],
         env: { PATH: Deno.env.get("PATH") || "" },
       });
 
@@ -191,11 +222,21 @@ Deno.test({
 
         assertExists(callResult.content);
         assertEquals(Array.isArray(callResult.content), true);
-        assertEquals(callResult.content.length, 1);
-        assertEquals(callResult.content[0].type, "text");
-        assertEquals(typeof callResult.content[0].text, "string");
+        assertEquals(
+          (callResult.content as { type: string; text: string }[]).length,
+          1,
+        );
+        assertEquals(
+          (callResult.content as { type: string; text: string }[])[0].type,
+          "text",
+        );
+        assertEquals(
+          typeof (callResult.content as { type: string; text: string }[])[0]
+            .text,
+          "string",
+        );
         console.log("Tool execution test passed ✓");
-      } catch (error) {
+      } catch (_error) {
         console.log("Tool execution test skipped (tmux not available)");
       }
     } finally {
@@ -233,8 +274,14 @@ Deno.test({
     assertEquals(output.includes("gemini-search"), true);
     assertEquals(output.includes("terminal"), true);
     assertEquals(output.includes("terminal-close"), true);
-    assertEquals(output.includes("Search the web and get summaries using Gemini CLI"), true);
-    assertEquals(output.includes("Interactive terminal session management using tmux"), true);
+    assertEquals(
+      output.includes("Search the web and get summaries using Gemini CLI"),
+      true,
+    );
+    assertEquals(
+      output.includes("Interactive terminal session management using tmux"),
+      true,
+    );
     console.log("--list flag test passed ✓");
   },
 });
