@@ -2,6 +2,17 @@ import { ModularMCPServer } from "./server.ts";
 import { ToolModule } from "./tools/tool-interface.ts";
 import { geminiSearchTool } from "./tools/gemini-search.ts";
 import { terminalCloseTool, terminalTool } from "./tools/terminal.ts";
+import {
+  addObservationsTool,
+  createEntitesTool,
+  createRelationsTool,
+  deleteEntitiesTool,
+  deleteObservationsTool,
+  deleteRelationsTool,
+  openNodesTool,
+  readGraphTool,
+  searchNodesTool,
+} from "./tools/memory.ts";
 
 interface ServerConfig {
   tools?: string[];
@@ -12,6 +23,15 @@ const AVAILABLE_TOOLS = new Map<string, ToolModule>([
   [geminiSearchTool.id, geminiSearchTool],
   [terminalTool.id, terminalTool],
   [terminalCloseTool.id, terminalCloseTool],
+  [createEntitesTool.id, createEntitesTool],
+  [createRelationsTool.id, createRelationsTool],
+  [addObservationsTool.id, addObservationsTool],
+  [deleteEntitiesTool.id, deleteEntitiesTool],
+  [deleteObservationsTool.id, deleteObservationsTool],
+  [deleteRelationsTool.id, deleteRelationsTool],
+  [readGraphTool.id, readGraphTool],
+  [searchNodesTool.id, searchNodesTool],
+  [openNodesTool.id, openNodesTool],
 ]);
 
 function parseCliArgs(args: string[]): ServerConfig {

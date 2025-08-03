@@ -1,0 +1,4 @@
+{"type":"entity","name":"Alice","entityType":"Person","observations":["Works at OpenAI","Likes coffee"]}
+{"type":"entity","name":"Bob","entityType":"Person","observations":["Software engineer"]}
+{"type":"entity","name":"TestEntity","entityType":"Test","observations":["Test observation"]}
+{"type":"relation","from":"Alice","to":"Bob","relationType":"knows"}
