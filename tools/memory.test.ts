@@ -95,7 +95,7 @@ Deno.test("memory tool integration test", async () => {
 
 Deno.test("memory tool execution", async () => {
   const tempFile = await Deno.makeTempFile({ suffix: ".json" });
-  
+
   // Override the default memory file path for testing
   const originalPath = Deno.env.get("MEMORY_FILE_PATH");
   Deno.env.set("MEMORY_FILE_PATH", tempFile);

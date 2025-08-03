@@ -1,38 +1,112 @@
-import { ModularMCPServer } from "./server.ts";
-import { ToolModule } from "./tools/tool-interface.ts";
-import { geminiSearchTool } from "./tools/gemini-search.ts";
-import { terminalCloseTool, terminalTool } from "./tools/terminal.ts";
+import { Server } from "@modelcontextprotocol/sdk/server/index.js";
+import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import {
-  addObservationsTool,
-  createEntitesTool,
-  createRelationsTool,
-  deleteEntitiesTool,
-  deleteObservationsTool,
-  deleteRelationsTool,
-  openNodesTool,
-  readGraphTool,
-  searchNodesTool,
-} from "./tools/memory.ts";
+  CallToolRequestSchema,
+  ListToolsRequestSchema,
+} from "@modelcontextprotocol/sdk/types.js";
+
+import { ToolModule, ToolRegistry } from "./tools/tool-interface.ts";
+import { AVAILABLE_TOOLS } from "./tools/mod.ts";
 
 interface ServerConfig {
   tools?: string[];
   listTools?: boolean;
 }
 
-const AVAILABLE_TOOLS = new Map<string, ToolModule>([
-  [geminiSearchTool.id, geminiSearchTool],
-  [terminalTool.id, terminalTool],
-  [terminalCloseTool.id, terminalCloseTool],
-  [createEntitesTool.id, createEntitesTool],
-  [createRelationsTool.id, createRelationsTool],
-  [addObservationsTool.id, addObservationsTool],
-  [deleteEntitiesTool.id, deleteEntitiesTool],
-  [deleteObservationsTool.id, deleteObservationsTool],
-  [deleteRelationsTool.id, deleteRelationsTool],
-  [readGraphTool.id, readGraphTool],
-  [searchNodesTool.id, searchNodesTool],
-  [openNodesTool.id, openNodesTool],
-]);
+interface ServerConfig {
+  tools?: string[];
+}
+
+class ModularMCPServer {
+  private server: Server;
+  private toolRegistry: ToolRegistry = new Map();
+
+  constructor(
+    private config: ServerConfig,
+    private availableTools: Map<string, ToolModule[]>,
+  ) {
+    this.server = new Server(
+      {
+        name: "modular-mcp-server",
+        version: "1.0.0",
+      },
+      {
+        capabilities: {
+          tools: {},
+        },
+      },
+    );
+  }
+
+  async initialize() {
+    const toolsToLoad = this.config.tools ||
+      Array.from(this.availableTools.keys());
+
+    for (const toolId of toolsToLoad) {
+      const toolModule = this.availableTools.get(toolId);
+      if (!toolModule) {
+        console.error(`Tool '${toolId}' not found`);
+        continue;
+      }
+
+      let validationPassed = true;
+      for (const tool of toolModule) {
+        if (tool.validate && !(await tool.validate())) {
+          console.error(`Tool '${toolId}' validation failed`);
+          validationPassed = false;
+          break;
+        }
+      }
+
+      if (!validationPassed) {
+        continue;
+      }
+
+      for (const tool of toolModule) {
+        this.toolRegistry.set(tool.getToolDefinition().tool.name, tool);
+      }
+      console.error(`Loaded tool: ${toolId}`);
+    }
+
+    this.setupToolHandlers();
+  }
+
+  private setupToolHandlers() {
+    this.server.setRequestHandler(ListToolsRequestSchema, () => {
+      const tools = Array.from(this.toolRegistry.values()).map(
+        (module) => module.getToolDefinition().tool,
+      );
+
+      return { tools };
+    });
+
+    this.server.setRequestHandler(CallToolRequestSchema, async (request) => {
+      const { name, arguments: args } = request.params;
+
+      for (const [, module] of this.toolRegistry) {
+        const definition = module.getToolDefinition();
+        if (definition.tool.name === name) {
+          return await definition.execute(args || {});
+        }
+      }
+
+      throw new Error(`Unknown tool: ${name}`);
+    });
+  }
+
+  async run() {
+    const transport = new StdioServerTransport();
+    await this.server.connect(transport);
+  }
+
+  async cleanup() {
+    for (const [, module] of this.toolRegistry) {
+      if (module.cleanup) {
+        await module.cleanup();
+      }
+    }
+  }
+}
 
 function parseCliArgs(args: string[]): ServerConfig {
   const config: ServerConfig = {};
@@ -67,8 +141,11 @@ Options:
   
 Available tools:`);
 
-  for (const [id, tool] of AVAILABLE_TOOLS) {
-    console.log(`  ${id}: ${tool.description}`);
+  for (const [id, tools] of AVAILABLE_TOOLS) {
+    console.log(`  ${id}:`);
+    for (const tool of tools) {
+      console.log(`  - ${tool.getToolDefinition().tool.name}`);
+    }
   }
 
   console.log("\nExamples:");

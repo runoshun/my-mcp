@@ -2,9 +2,6 @@ import { ToolModule } from "./tool-interface.ts";
 import { CallToolResult } from "@modelcontextprotocol/sdk/types.js";
 
 export const geminiSearchTool: ToolModule = {
-  id: "gemini-search",
-  description: "Search the web and get summaries using Gemini CLI",
-
   getToolDefinition: () => ({
     tool: {
       name: "gemini_search",

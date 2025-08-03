@@ -38,8 +38,7 @@ class KnowledgeGraphManager {
   private memoryFilePath: string;
 
   constructor(memoryFilePath?: string) {
-    this.memoryFilePath = memoryFilePath ||
-      Deno.env.get("MEMORY_FILE_PATH") ||
+    this.memoryFilePath = memoryFilePath || Deno.env.get("MEMORY_FILE_PATH") ||
       "./memory.json";
   }
 
@@ -47,12 +46,15 @@ class KnowledgeGraphManager {
     try {
       const data = await Deno.readTextFile(this.memoryFilePath);
       const lines = data.split("\n").filter((line) => line.trim() !== "");
-      return lines.reduce((graph: KnowledgeGraph, line) => {
-        const item = JSON.parse(line);
-        if (item.type === "entity") graph.entities.push(item as Entity);
-        if (item.type === "relation") graph.relations.push(item as Relation);
-        return graph;
-      }, { entities: [], relations: [] });
+      return lines.reduce(
+        (graph: KnowledgeGraph, line) => {
+          const item = JSON.parse(line);
+          if (item.type === "entity") graph.entities.push(item as Entity);
+          if (item.type === "relation") graph.relations.push(item as Relation);
+          return graph;
+        },
+        { entities: [], relations: [] },
+      );
     } catch (error) {
       if (error instanceof Deno.errors.NotFound) {
         return { entities: [], relations: [] };
@@ -71,8 +73,11 @@ class KnowledgeGraphManager {
 
   async createEntities(entities: Entity[]): Promise<Entity[]> {
     const graph = await this.loadGraph();
-    const newEntities = entities.filter((e) =>
-      !graph.entities.some((existingEntity) => existingEntity.name === e.name)
+    const newEntities = entities.filter(
+      (e) =>
+        !graph.entities.some(
+          (existingEntity) => existingEntity.name === e.name,
+        ),
     );
     graph.entities.push(...newEntities);
     await this.saveGraph(graph);
@@ -81,12 +86,14 @@ class KnowledgeGraphManager {
 
   async createRelations(relations: Relation[]): Promise<Relation[]> {
     const graph = await this.loadGraph();
-    const newRelations = relations.filter((r) =>
-      !graph.relations.some((existingRelation) =>
-        existingRelation.from === r.from &&
-        existingRelation.to === r.to &&
-        existingRelation.relationType === r.relationType
-      )
+    const newRelations = relations.filter(
+      (r) =>
+        !graph.relations.some(
+          (existingRelation) =>
+            existingRelation.from === r.from &&
+            existingRelation.to === r.to &&
+            existingRelation.relationType === r.relationType,
+        ),
     );
     graph.relations.push(...newRelations);
     await this.saveGraph(graph);
@@ -102,8 +109,8 @@ class KnowledgeGraphManager {
       if (!entity) {
         throw new Error(`Entity with name ${o.entityName} not found`);
       }
-      const newObservations = o.contents.filter((content) =>
-        !entity.observations.includes(content)
+      const newObservations = o.contents.filter(
+        (content) => !entity.observations.includes(content),
       );
       entity.observations.push(...newObservations);
       return { entityName: o.entityName, addedObservations: newObservations };
@@ -114,11 +121,11 @@ class KnowledgeGraphManager {
 
   async deleteEntities(entityNames: string[]): Promise<void> {
     const graph = await this.loadGraph();
-    graph.entities = graph.entities.filter((e) =>
-      !entityNames.includes(e.name)
+    graph.entities = graph.entities.filter(
+      (e) => !entityNames.includes(e.name),
     );
-    graph.relations = graph.relations.filter((r) =>
-      !entityNames.includes(r.from) && !entityNames.includes(r.to)
+    graph.relations = graph.relations.filter(
+      (r) => !entityNames.includes(r.from) && !entityNames.includes(r.to),
     );
     await this.saveGraph(graph);
   }
@@ -128,8 +135,8 @@ class KnowledgeGraphManager {
     deletions.forEach((d) => {
       const entity = graph.entities.find((e) => e.name === d.entityName);
       if (entity) {
-        entity.observations = entity.observations.filter((o) =>
-          !d.observations.includes(o)
+        entity.observations = entity.observations.filter(
+          (o) => !d.observations.includes(o),
         );
       }
     });
@@ -138,12 +145,14 @@ class KnowledgeGraphManager {
 
   async deleteRelations(relations: Relation[]): Promise<void> {
     const graph = await this.loadGraph();
-    graph.relations = graph.relations.filter((r) =>
-      !relations.some((delRelation) =>
-        r.from === delRelation.from &&
-        r.to === delRelation.to &&
-        r.relationType === delRelation.relationType
-      )
+    graph.relations = graph.relations.filter(
+      (r) =>
+        !relations.some(
+          (delRelation) =>
+            r.from === delRelation.from &&
+            r.to === delRelation.to &&
+            r.relationType === delRelation.relationType,
+        ),
     );
     await this.saveGraph(graph);
   }
@@ -155,16 +164,19 @@ class KnowledgeGraphManager {
   async searchNodes(query: string): Promise<KnowledgeGraph> {
     const graph = await this.loadGraph();
 
-    const filteredEntities = graph.entities.filter((e) =>
-      e.name.toLowerCase().includes(query.toLowerCase()) ||
-      e.entityType.toLowerCase().includes(query.toLowerCase()) ||
-      e.observations.some((o) => o.toLowerCase().includes(query.toLowerCase()))
+    const filteredEntities = graph.entities.filter(
+      (e) =>
+        e.name.toLowerCase().includes(query.toLowerCase()) ||
+        e.entityType.toLowerCase().includes(query.toLowerCase()) ||
+        e.observations.some((o) =>
+          o.toLowerCase().includes(query.toLowerCase())
+        ),
     );
 
     const filteredEntityNames = new Set(filteredEntities.map((e) => e.name));
 
-    const filteredRelations = graph.relations.filter((r) =>
-      filteredEntityNames.has(r.from) && filteredEntityNames.has(r.to)
+    const filteredRelations = graph.relations.filter(
+      (r) => filteredEntityNames.has(r.from) && filteredEntityNames.has(r.to),
     );
 
     return {
@@ -182,8 +194,8 @@ class KnowledgeGraphManager {
 
     const filteredEntityNames = new Set(filteredEntities.map((e) => e.name));
 
-    const filteredRelations = graph.relations.filter((r) =>
-      filteredEntityNames.has(r.from) && filteredEntityNames.has(r.to)
+    const filteredRelations = graph.relations.filter(
+      (r) => filteredEntityNames.has(r.from) && filteredEntityNames.has(r.to),
     );
 
     return {
@@ -237,10 +249,12 @@ export const createEntitiesToolDefinition: ToolDefinition = {
     const entities = args.entities as Entity[];
     const result = await getKnowledgeGraphManager().createEntities(entities);
     return {
-      content: [{
-        type: "text" as const,
-        text: JSON.stringify(result, null, 2),
-      }],
+      content: [
+        {
+          type: "text" as const,
+          text: JSON.stringify(result, null, 2),
+        },
+      ],
     };
   },
 };
@@ -282,10 +296,12 @@ export const createRelationsToolDefinition: ToolDefinition = {
     const relations = args.relations as Relation[];
     const result = await getKnowledgeGraphManager().createRelations(relations);
     return {
-      content: [{
-        type: "text" as const,
-        text: JSON.stringify(result, null, 2),
-      }],
+      content: [
+        {
+          type: "text" as const,
+          text: JSON.stringify(result, null, 2),
+        },
+      ],
     };
   },
 };
@@ -323,12 +339,16 @@ export const addObservationsToolDefinition: ToolDefinition = {
   },
   execute: async (args: Record<string, unknown>) => {
     const observations = args.observations as ObservationInput[];
-    const result = await getKnowledgeGraphManager().addObservations(observations);
+    const result = await getKnowledgeGraphManager().addObservations(
+      observations,
+    );
     return {
-      content: [{
-        type: "text" as const,
-        text: JSON.stringify(result, null, 2),
-      }],
+      content: [
+        {
+          type: "text" as const,
+          text: JSON.stringify(result, null, 2),
+        },
+      ],
     };
   },
 };
@@ -354,10 +374,12 @@ export const deleteEntitiesToolDefinition: ToolDefinition = {
     const entityNames = args.entityNames as string[];
     await getKnowledgeGraphManager().deleteEntities(entityNames);
     return {
-      content: [{
-        type: "text" as const,
-        text: "Entities deleted successfully",
-      }],
+      content: [
+        {
+          type: "text" as const,
+          text: "Entities deleted successfully",
+        },
+      ],
     };
   },
 };
@@ -397,10 +419,12 @@ export const deleteObservationsToolDefinition: ToolDefinition = {
     const deletions = args.deletions as ObservationDeletion[];
     await getKnowledgeGraphManager().deleteObservations(deletions);
     return {
-      content: [{
-        type: "text" as const,
-        text: "Observations deleted successfully",
-      }],
+      content: [
+        {
+          type: "text" as const,
+          text: "Observations deleted successfully",
+        },
+      ],
     };
   },
 };
@@ -442,10 +466,12 @@ export const deleteRelationsToolDefinition: ToolDefinition = {
     const relations = args.relations as Relation[];
     await getKnowledgeGraphManager().deleteRelations(relations);
     return {
-      content: [{
-        type: "text" as const,
-        text: "Relations deleted successfully",
-      }],
+      content: [
+        {
+          type: "text" as const,
+          text: "Relations deleted successfully",
+        },
+      ],
     };
   },
 };
@@ -462,10 +488,12 @@ export const readGraphToolDefinition: ToolDefinition = {
   execute: async () => {
     const result = await getKnowledgeGraphManager().readGraph();
     return {
-      content: [{
-        type: "text" as const,
-        text: JSON.stringify(result, null, 2),
-      }],
+      content: [
+        {
+          type: "text" as const,
+          text: JSON.stringify(result, null, 2),
+        },
+      ],
     };
   },
 };
@@ -490,10 +518,12 @@ export const searchNodesToolDefinition: ToolDefinition = {
     const query = args.query as string;
     const result = await getKnowledgeGraphManager().searchNodes(query);
     return {
-      content: [{
-        type: "text" as const,
-        text: JSON.stringify(result, null, 2),
-      }],
+      content: [
+        {
+          type: "text" as const,
+          text: JSON.stringify(result, null, 2),
+        },
+      ],
     };
   },
 };
@@ -518,69 +548,49 @@ export const openNodesToolDefinition: ToolDefinition = {
     const names = args.names as string[];
     const result = await getKnowledgeGraphManager().openNodes(names);
     return {
-      content: [{
-        type: "text" as const,
-        text: JSON.stringify(result, null, 2),
-      }],
+      content: [
+        {
+          type: "text" as const,
+          text: JSON.stringify(result, null, 2),
+        },
+      ],
     };
   },
 };
 
 // Export individual tool modules
 export const createEntitesTool: ToolModule = {
-  id: "create-entities",
-  description: "Create multiple new entities in the knowledge graph",
   getToolDefinition: () => createEntitiesToolDefinition,
 };
 
 export const createRelationsTool: ToolModule = {
-  id: "create-relations",
-  description:
-    "Create multiple new relations between entities in the knowledge graph",
   getToolDefinition: () => createRelationsToolDefinition,
 };
 
 export const addObservationsTool: ToolModule = {
-  id: "add-observations",
-  description:
-    "Add new observations to existing entities in the knowledge graph",
   getToolDefinition: () => addObservationsToolDefinition,
 };
 
 export const deleteEntitiesTool: ToolModule = {
-  id: "delete-entities",
-  description:
-    "Delete multiple entities and their associated relations from the knowledge graph",
   getToolDefinition: () => deleteEntitiesToolDefinition,
 };
 
 export const deleteObservationsTool: ToolModule = {
-  id: "delete-observations",
-  description:
-    "Delete specific observations from entities in the knowledge graph",
   getToolDefinition: () => deleteObservationsToolDefinition,
 };
 
 export const deleteRelationsTool: ToolModule = {
-  id: "delete-relations",
-  description: "Delete multiple relations from the knowledge graph",
   getToolDefinition: () => deleteRelationsToolDefinition,
 };
 
 export const readGraphTool: ToolModule = {
-  id: "read-graph",
-  description: "Read the entire knowledge graph",
   getToolDefinition: () => readGraphToolDefinition,
 };
 
 export const searchNodesTool: ToolModule = {
-  id: "search-nodes",
-  description: "Search for nodes in the knowledge graph based on a query",
   getToolDefinition: () => searchNodesToolDefinition,
 };
 
 export const openNodesTool: ToolModule = {
-  id: "open-nodes",
-  description: "Open specific nodes in the knowledge graph by their names",
   getToolDefinition: () => openNodesToolDefinition,
 };

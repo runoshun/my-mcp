@@ -11,8 +11,6 @@ export interface ToolDefinition {
 }
 
 export interface ToolModule {
-  id: string;
-  description: string;
   getToolDefinition: () => ToolDefinition;
   validate?: () => Promise<boolean>;
   cleanup?: () => Promise<void>;

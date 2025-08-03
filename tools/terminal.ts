@@ -43,7 +43,8 @@ class TerminalManager {
     while (i < keys.length) {
       // Check for control sequences (C-x, M-x)
       if (
-        i < keys.length - 2 && keys[i + 1] === "-" &&
+        i < keys.length - 2 &&
+        keys[i + 1] === "-" &&
         (keys[i] === "C" || keys[i] === "M")
       ) {
         sequences.push(keys.substring(i, i + 3));
@@ -258,7 +259,8 @@ class TerminalManager {
         ];
 
         const isSpecialKey = specialKeys.includes(keySeq) ||
-          keySeq.startsWith("C-") || keySeq.startsWith("M-") ||
+          keySeq.startsWith("C-") ||
+          keySeq.startsWith("M-") ||
           keySeq.startsWith("F");
         if (!isSpecialKey && keySeq) {
           args.push("-l"); // literal flag for regular text
@@ -448,9 +450,6 @@ class TerminalManager {
 }
 
 export const terminalTool: ToolModule = {
-  id: "terminal",
-  description: "Interactive terminal session management using tmux",
-
   getToolDefinition: () => ({
     tool: {
       name: "terminal_execute",
@@ -605,9 +604,6 @@ Best practices:
 };
 
 export const terminalCloseTool: ToolModule = {
-  id: "terminal-close",
-  description: "Close a terminal session and free up associated resources",
-
   getToolDefinition: () => ({
     tool: {
       name: "terminal_close",
