@@ -132,62 +132,6 @@ Deno.test({
 });
 
 Deno.test({
-  name: "Server loads configuration from file",
-  sanitizeResources: false,
-  sanitizeOps: false,
-  fn: async () => {
-    console.log("Testing config file loading...");
-
-    const configPath = "./test-config.json";
-    await Deno.writeTextFile(
-      configPath,
-      JSON.stringify({
-        tools: ["gemini-search"],
-      }),
-    );
-
-    try {
-      const transport = new StdioClientTransport({
-        command: "deno",
-        args: [
-          "run",
-          "--allow-read",
-          "--allow-env",
-          "--allow-run",
-          "main.ts",
-          "--config",
-          configPath,
-        ],
-        env: { PATH: Deno.env.get("PATH") || "" },
-      });
-
-      const client = new Client(
-        {
-          name: "test-client",
-          version: "1.0.0",
-        },
-        {
-          capabilities: {},
-        },
-      );
-
-      try {
-        await client.connect(transport);
-
-        const toolsResponse = await client.listTools();
-        assertEquals(toolsResponse.tools.length, 1);
-        assertEquals(toolsResponse.tools[0].name, "gemini_search");
-        console.log("Config file loading test passed ✓");
-      } finally {
-        await client.close();
-      }
-    } finally {
-      await Deno.remove(configPath);
-    }
-  },
-});
-
-Deno.test({
   name: "Tool execution works correctly",
   sanitizeResources: false,
   sanitizeOps: false,

@@ -5,7 +5,10 @@ import {
   ListToolsRequestSchema,
 } from "@modelcontextprotocol/sdk/types.js";
 import { ToolModule, ToolRegistry } from "./tools/tool-interface.ts";
-import { ServerConfig } from "./config.ts";
+
+interface ServerConfig {
+  tools?: string[];
+}
 
 export class ModularMCPServer {
   private server: Server;

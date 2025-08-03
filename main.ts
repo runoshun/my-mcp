@@ -1,8 +1,12 @@
 import { ModularMCPServer } from "./server.ts";
-import { mergeConfigs, parseCliArgs } from "./config.ts";
 import { ToolModule } from "./tools/tool-interface.ts";
 import { geminiSearchTool } from "./tools/gemini-search.ts";
 import { terminalCloseTool, terminalTool } from "./tools/terminal.ts";
+
+interface ServerConfig {
+  tools?: string[];
+  listTools?: boolean;
+}
 
 const AVAILABLE_TOOLS = new Map<string, ToolModule>([
   [geminiSearchTool.id, geminiSearchTool],
@@ -10,13 +14,35 @@ const AVAILABLE_TOOLS = new Map<string, ToolModule>([
   [terminalCloseTool.id, terminalCloseTool],
 ]);
 
+function parseCliArgs(args: string[]): ServerConfig {
+  const config: ServerConfig = {};
+
+  for (let i = 0; i < args.length; i++) {
+    const arg = args[i];
+
+    switch (arg) {
+      case "--tools":
+      case "-t":
+        if (i + 1 < args.length) {
+          config.tools = args[++i].split(",").map((t) => t.trim());
+        }
+        break;
+      case "--list":
+      case "-l":
+        config.listTools = true;
+        break;
+    }
+  }
+
+  return config;
+}
+
 function printUsage() {
   console.log(`
 Usage: deno run main.ts [options]
 
 Options:
   --tools, -t <tools>     Comma-separated list of tools to enable
-  --config, -c <file>     Path to configuration file
   --list, -l              List available tools and exit
   
 Available tools:`);
@@ -27,20 +53,18 @@ Available tools:`);
 
   console.log("\nExamples:");
   console.log("  deno run main.ts --tools gemini-search");
-  console.log("  deno run main.ts --config config.json");
   console.log("  deno run main.ts --list\n");
 }
 
 if (import.meta.main) {
-  const cliConfig = parseCliArgs(Deno.args);
+  const config = parseCliArgs(Deno.args);
 
-  if (cliConfig.listTools) {
+  if (config.listTools) {
     printUsage();
     Deno.exit(0);
   }
 
   try {
-    const config = await mergeConfigs(cliConfig);
     const server = new ModularMCPServer(config, AVAILABLE_TOOLS);
 
     await server.initialize();
