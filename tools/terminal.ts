@@ -36,6 +36,90 @@ class TerminalManager {
     return `ai-terminal-${crypto.randomUUID().slice(0, 8)}`;
   }
 
+  private parseKeySequences(keys: string): string[] {
+    const sequences: string[] = [];
+    let i = 0;
+
+    while (i < keys.length) {
+      // Check for control sequences (C-x, M-x)
+      if (
+        i < keys.length - 2 && keys[i + 1] === "-" &&
+        (keys[i] === "C" || keys[i] === "M")
+      ) {
+        sequences.push(keys.substring(i, i + 3));
+        i += 3;
+        continue;
+      }
+
+      // Check for function keys (F1-F12)
+      if (keys[i] === "F" && i < keys.length - 1) {
+        let j = i + 1;
+        while (j < keys.length && /\d/.test(keys[j])) {
+          j++;
+        }
+        if (j > i + 1) {
+          const fKey = keys.substring(i, j);
+          if (
+            [
+              "F1",
+              "F2",
+              "F3",
+              "F4",
+              "F5",
+              "F6",
+              "F7",
+              "F8",
+              "F9",
+              "F10",
+              "F11",
+              "F12",
+            ].includes(fKey)
+          ) {
+            sequences.push(fKey);
+            i = j;
+            continue;
+          }
+        }
+      }
+
+      // Check for other special keys
+      const specialKeys = [
+        "Up",
+        "Down",
+        "Left",
+        "Right",
+        "Home",
+        "End",
+        "PageUp",
+        "PageDown",
+        "Escape",
+        "Tab",
+        "BSpace",
+        "DC",
+        "IC",
+        "Enter",
+      ];
+      let foundSpecial = false;
+
+      for (const special of specialKeys) {
+        if (keys.substring(i).startsWith(special)) {
+          sequences.push(special);
+          i += special.length;
+          foundSpecial = true;
+          break;
+        }
+      }
+
+      if (!foundSpecial) {
+        // Regular character
+        sequences.push(keys[i]);
+        i++;
+      }
+    }
+
+    return sequences;
+  }
+
   private async sessionExists(sessionName: string): Promise<boolean> {
     if (!this.socketPath) return false;
 
@@ -53,13 +137,35 @@ class TerminalManager {
     }
   }
 
-  private async createSession(sessionName: string): Promise<void> {
+  private async createSession(
+    sessionName: string,
+    terminalSize?: { width: number; height: number },
+  ): Promise<void> {
     if (!this.socketPath) {
       throw new Error("Socket path not initialized");
     }
 
+    const args = [
+      "-S",
+      this.socketPath,
+      "new-session",
+      "-d",
+      "-s",
+      sessionName,
+    ];
+
+    // Add terminal size if specified
+    if (terminalSize) {
+      args.push(
+        "-x",
+        terminalSize.width.toString(),
+        "-y",
+        terminalSize.height.toString(),
+      );
+    }
+
     const process = new Deno.Command("tmux", {
-      args: ["-S", this.socketPath, "new-session", "-d", "-s", sessionName],
+      args,
       stdout: "piped",
       stderr: "piped",
     });
@@ -74,7 +180,10 @@ class TerminalManager {
     await new Promise((resolve) => setTimeout(resolve, 100));
   }
 
-  private async getOrCreateSession(sessionName?: string): Promise<string> {
+  private async getOrCreateSession(
+    sessionName?: string,
+    terminalSize?: { width: number; height: number },
+  ): Promise<string> {
     await this.initializeSocketDir();
 
     if (!sessionName) {
@@ -86,7 +195,7 @@ class TerminalManager {
     }
 
     if (!(await this.sessionExists(sessionName))) {
-      await this.createSession(sessionName);
+      await this.createSession(sessionName, terminalSize);
     }
 
     this.lastSessionName = sessionName;
@@ -102,9 +211,78 @@ class TerminalManager {
   private async sendKeysToSession(
     sessionName: string,
     keys: string,
+    keyDelay?: number,
   ): Promise<void> {
     if (!this.socketPath) {
       throw new Error("Socket path not initialized");
+    }
+
+    // If keyDelay is specified and greater than 0, send keys individually with delay
+    if (keyDelay && keyDelay > 0) {
+      // Parse keys to handle special key sequences properly
+      const keySequences = this.parseKeySequences(keys);
+
+      for (const keySeq of keySequences) {
+        const args = ["-S", this.socketPath, "send-keys", "-t", sessionName];
+
+        // Check if this is a special key
+        const specialKeys = [
+          "C-",
+          "M-",
+          "F1",
+          "F2",
+          "F3",
+          "F4",
+          "F5",
+          "F6",
+          "F7",
+          "F8",
+          "F9",
+          "F10",
+          "F11",
+          "F12",
+          "Up",
+          "Down",
+          "Left",
+          "Right",
+          "Home",
+          "End",
+          "PageUp",
+          "PageDown",
+          "Escape",
+          "Tab",
+          "BSpace",
+          "DC",
+          "IC",
+          "Enter",
+        ];
+
+        const isSpecialKey = specialKeys.includes(keySeq) ||
+          keySeq.startsWith("C-") || keySeq.startsWith("M-") ||
+          keySeq.startsWith("F");
+        if (!isSpecialKey && keySeq) {
+          args.push("-l"); // literal flag for regular text
+        }
+        args.push(keySeq);
+
+        const process = new Deno.Command("tmux", {
+          args,
+          stdout: "piped",
+          stderr: "piped",
+        });
+
+        const { code, stderr } = await process.output();
+        if (code !== 0) {
+          const error = new TextDecoder().decode(stderr);
+          throw new Error(
+            `Failed to send key '${keySeq}' to session ${sessionName}: ${error}`,
+          );
+        }
+
+        // Add delay between keys
+        await new Promise((resolve) => setTimeout(resolve, keyDelay));
+      }
+      return;
     }
 
     // Check if keys contain special key notations
@@ -190,12 +368,17 @@ class TerminalManager {
     keys: string,
     readWait: number,
     sendEnter: boolean,
+    keyDelay?: number,
+    terminalSize?: { width: number; height: number },
   ): Promise<{ sessionName: string; output: string }> {
-    const actualSessionName = await this.getOrCreateSession(sessionName);
+    const actualSessionName = await this.getOrCreateSession(
+      sessionName,
+      terminalSize,
+    );
 
     if (keys || sendEnter) {
       if (keys) {
-        await this.sendKeysToSession(actualSessionName, keys);
+        await this.sendKeysToSession(actualSessionName, keys, keyDelay);
       }
 
       if (sendEnter) {
@@ -321,6 +504,25 @@ Best practices:
               "Whether to send an Enter key (newline) after the keys. Useful when Claude Code trims trailing newlines.",
             default: false,
           },
+          keyDelay: {
+            type: "number",
+            description:
+              "Delay in milliseconds between individual key presses. Useful for slow applications or when precise timing is needed.",
+          },
+          terminalSize: {
+            type: "object",
+            description: "Terminal size configuration for new sessions",
+            properties: {
+              width: {
+                type: "number",
+                description: "Terminal width in columns",
+              },
+              height: {
+                type: "number",
+                description: "Terminal height in rows",
+              },
+            },
+          },
         },
         required: [],
       },
@@ -333,11 +535,15 @@ Best practices:
           readWait = 1000,
           keys = "",
           sendEnter = false,
+          keyDelay,
+          terminalSize,
         } = args as {
           sessionName?: string;
           readWait?: number;
           keys?: string;
           sendEnter?: boolean;
+          keyDelay?: number;
+          terminalSize?: { width: number; height: number };
         };
 
         const manager = TerminalManager.getInstance();
@@ -346,6 +552,8 @@ Best practices:
           keys,
           readWait,
           sendEnter,
+          keyDelay,
+          terminalSize,
         );
 
         const resultMsg = keys === ""
