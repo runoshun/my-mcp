@@ -2,7 +2,7 @@ import { geminiSearchTool } from "./gemini-search.ts";
 import { terminalCloseTool, terminalTool } from "./terminal.ts";
 import {
   addObservationsTool,
-  createEntitesTool,
+  createEntitiesTool,
   createRelationsTool,
   deleteEntitiesTool,
   deleteObservationsTool,
@@ -12,18 +12,22 @@ import {
   searchNodesTool,
 } from "./memory.ts";
 import { ToolModule } from "./tool-interface.ts";
-import { documentAvailablePackagesTool, documentReadTool } from "./documentation.ts";
+import {
+  documentAvailablePackagesTool,
+  documentReadTool,
+} from "./documentation.ts";
 
 export const AVAILABLE_TOOLS = new Map<string, ToolModule[]>([
   ["gemini-search", [geminiSearchTool]],
   ["terminal", [terminalTool, terminalCloseTool]],
   [
-    "documentation", [documentAvailablePackagesTool, documentReadTool]
+    "documentation",
+    [documentAvailablePackagesTool, documentReadTool],
   ],
   [
     "memory",
     [
-      createEntitesTool,
+      createEntitiesTool,
       createRelationsTool,
       addObservationsTool,
       deleteEntitiesTool,

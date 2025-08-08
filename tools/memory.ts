@@ -559,7 +559,7 @@ export const openNodesToolDefinition: ToolDefinition = {
 };
 
 // Export individual tool modules
-export const createEntitesTool: ToolModule = {
+export const createEntitiesTool: ToolModule = {
   getToolDefinition: () => createEntitiesToolDefinition,
 };
 
