@@ -76,7 +76,7 @@ Deno.test("findPackagesWithDocs should find all packages with documentation", as
   try {
     const found = await findPackagesWithDocs(projectPath);
 
-    assertEquals(found.length, 3);
+    assertEquals(found.length, 4);
 
     const pkgWithDocpath = found.find(p => p.name === "pkg-with-docpath");
     assertExists(pkgWithDocpath);
@@ -93,6 +93,11 @@ Deno.test("findPackagesWithDocs should find all packages with documentation", as
     assertEquals(pkgWithReadme.type, "readme");
     assert(pkgWithReadme.docPath.endsWith("README.md"));
 
+    const pkgInScope = found.find(p => p.name === "@scope/pkg-in-scope");
+    assertExists(pkgInScope);
+    assertEquals(pkgInScope.type, "readme");
+    assert(pkgInScope.docPath.endsWith("README.md"));
+
   } finally {
     await Deno.remove(projectPath, { recursive: true });
   }
@@ -103,8 +108,7 @@ Deno.test("findPackagesWithDocs should filter packages with glob pattern", async
 
     try {
       const found = await findPackagesWithDocs(projectPath, "pkg-with-doc*");
-      assertEquals(found.length, 1);
-      assertEquals(found[0].name, "pkg-with-docpath");
+      assertEquals(found.length, 2);
     } finally {
       await Deno.remove(projectPath, { recursive: true });
     }

@@ -39,7 +39,11 @@ async function findDocumentation(
         }
       }
     } catch (e) {
-      console.error(`Error reading or parsing ${packageJsonPath}: ${e.message}`);
+      if (e instanceof Error) {
+        console.error(`Error reading or parsing ${packageJsonPath}: ${e.message}`);
+      } else {
+        console.error(`An unknown error occurred while reading or parsing ${packageJsonPath}: ${e}`);
+      }
     }
   }
 
