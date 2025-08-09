@@ -1,26 +1,26 @@
 import { assertEquals, assertExists } from "jsr:@std/assert";
 import {
-  createEntitesTool,
+  createEntitiesTool,
   createRelationsTool,
   readGraphTool,
   searchNodesTool,
 } from "./memory.ts";
 
 Deno.test("memory tool definitions", () => {
-  const createEntitiesDefinition = createEntitesTool.getToolDefinition();
-  assertEquals(createEntitiesDefinition.tool.name, "create_entities");
+  const createEntitiesDefinition = createEntitiesTool.getToolDefinition();
+  assertEquals(createEntitiesDefinition.tool.name, "memory_create_entities");
   assertExists(createEntitiesDefinition.tool.inputSchema);
 
   const createRelationsDefinition = createRelationsTool.getToolDefinition();
-  assertEquals(createRelationsDefinition.tool.name, "create_relations");
+  assertEquals(createRelationsDefinition.tool.name, "memory_create_relations");
   assertExists(createRelationsDefinition.tool.inputSchema);
 
   const readGraphDefinition = readGraphTool.getToolDefinition();
-  assertEquals(readGraphDefinition.tool.name, "read_graph");
+  assertEquals(readGraphDefinition.tool.name, "memory_read_graph");
   assertExists(readGraphDefinition.tool.inputSchema);
 
   const searchNodesDefinition = searchNodesTool.getToolDefinition();
-  assertEquals(searchNodesDefinition.tool.name, "search_nodes");
+  assertEquals(searchNodesDefinition.tool.name, "memory_search_nodes");
   assertExists(searchNodesDefinition.tool.inputSchema);
 });
 
@@ -32,7 +32,7 @@ Deno.test("memory tool integration test", async () => {
 
   try {
     // Test create entities tool
-    const createEntitiesDefinition = createEntitesTool.getToolDefinition();
+    const createEntitiesDefinition = createEntitiesTool.getToolDefinition();
     const createResult = await createEntitiesDefinition.execute({
       entities: [
         {
@@ -102,7 +102,7 @@ Deno.test("memory tool execution", async () => {
 
   try {
     // Test create entities tool
-    const createEntitiesDefinition = createEntitesTool.getToolDefinition();
+    const createEntitiesDefinition = createEntitiesTool.getToolDefinition();
     const createResult = await createEntitiesDefinition.execute({
       entities: [
         {

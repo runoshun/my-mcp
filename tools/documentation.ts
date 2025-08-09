@@ -1,6 +1,6 @@
 import { ToolModule } from "./tool-interface.ts";
 import { expandGlob } from "https://deno.land/std@0.224.0/fs/expand_glob.ts";
-import { join, dirname } from "https://deno.land/std@0.224.0/path/mod.ts";
+import { dirname, join } from "https://deno.land/std@0.224.0/path/mod.ts";
 
 const DOCS_DIRS = ["docs", "doc"];
 const DOCS_FILES = ["index.html", "index.md"];
@@ -40,9 +40,13 @@ async function findDocumentation(
       }
     } catch (e) {
       if (e instanceof Error) {
-        console.error(`Error reading or parsing ${packageJsonPath}: ${e.message}`);
+        console.error(
+          `Error reading or parsing ${packageJsonPath}: ${e.message}`,
+        );
       } else {
-        console.error(`An unknown error occurred while reading or parsing ${packageJsonPath}: ${e}`);
+        console.error(
+          `An unknown error occurred while reading or parsing ${packageJsonPath}: ${e}`,
+        );
       }
     }
   }
@@ -59,14 +63,16 @@ async function findDocumentation(
       }
       // If no index, look for any .md or .html
       for await (const entry of Deno.readDir(docsPath)) {
-        if (entry.isFile && (entry.name.endsWith(".md") || entry.name.endsWith(".html"))) {
+        if (
+          entry.isFile &&
+          (entry.name.endsWith(".md") || entry.name.endsWith(".html"))
+        ) {
           const docFilePath = join(docsPath, entry.name);
           return { path: packagePath, docPath: docFilePath, type: "docs" };
         }
       }
     }
   }
-
 
   // 3. Fallback to README.md
   const readmePath = join(packagePath, "README.md");
@@ -111,13 +117,15 @@ export const documentAvailablePackagesTool: ToolModule = {
   getToolDefinition: () => ({
     tool: {
       name: "document_available_packages",
-      description: "Finds documentation for packages in a node_modules directory.",
+      description:
+        "Finds documentation for packages in a node_modules directory.",
       inputSchema: {
         type: "object",
         properties: {
           path: {
             type: "string",
-            description: "The root path of the project to inspect. Defaults to the current directory.",
+            description:
+              "The root path of the project to inspect. Defaults to the current directory.",
           },
           glob: {
             type: "string",
@@ -128,14 +136,17 @@ export const documentAvailablePackagesTool: ToolModule = {
       },
     },
     execute: async (args) => {
-      const { path = ".", glob = "*" } = args as { path?: string; glob?: string };
+      const { path = ".", glob = "*" } = args as {
+        path?: string;
+        glob?: string;
+      };
 
       try {
         const packages = await findPackagesWithDocs(path, glob);
         const packageNames = packages.map((p) => ({
           name: p.name,
           type: p.type,
-          docPath: p.docPath
+          docPath: p.docPath,
         }));
 
         return {
@@ -176,14 +187,18 @@ export const documentReadTool: ToolModule = {
           },
           path: {
             type: "string",
-            description: "The root path of the project to inspect. Defaults to the current directory.",
+            description:
+              "The root path of the project to inspect. Defaults to the current directory.",
           },
         },
         required: ["packageName"],
       },
     },
     execute: async (args) => {
-      const { packageName, path = "." } = args as { packageName: string; path?: string };
+      const { packageName, path = "." } = args as {
+        packageName: string;
+        path?: string;
+      };
 
       try {
         // We don't know the glob for a specific package, so we find all and then filter.
@@ -192,7 +207,11 @@ export const documentReadTool: ToolModule = {
 
         if (!targetPackage) {
           return {
-            content: [{ type: "text", text: `Package '${packageName}' not found or has no documentation.` }],
+            content: [{
+              type: "text",
+              text:
+                `Package '${packageName}' not found or has no documentation.`,
+            }],
           };
         }
 
