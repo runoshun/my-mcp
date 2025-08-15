@@ -40,19 +40,79 @@ class TerminalManager {
     const sequences: string[] = [];
     let i = 0;
 
+    const specialKeys = [
+      "Up",
+      "Down",
+      "Left",
+      "Right",
+      "Home",
+      "End",
+      "PageUp",
+      "PageDown",
+      "Escape",
+      "Tab",
+      "BSpace",
+      "DC",
+      "IC",
+      "Enter",
+    ];
+
     while (i < keys.length) {
-      // Check for control sequences (C-x, M-x)
+      // Check for control or meta sequences like C-Enter, M-Left
       if (
         i < keys.length - 2 &&
         keys[i + 1] === "-" &&
         (keys[i] === "C" || keys[i] === "M")
       ) {
+        const j = i + 2;
+
+        // Check for function keys after modifier
+        if (keys[j] === "F") {
+          let k = j + 1;
+          while (k < keys.length && /\d/.test(keys[k])) {
+            k++;
+          }
+          const fKey = keys.substring(j, k);
+          if (
+            [
+              "F1",
+              "F2",
+              "F3",
+              "F4",
+              "F5",
+              "F6",
+              "F7",
+              "F8",
+              "F9",
+              "F10",
+              "F11",
+              "F12",
+            ].includes(fKey)
+          ) {
+            sequences.push(keys.substring(i, k));
+            i = k;
+            continue;
+          }
+        }
+
+        let matched = false;
+        for (const special of specialKeys) {
+          if (keys.substring(j).startsWith(special)) {
+            sequences.push(keys.substring(i, j + special.length));
+            i = j + special.length;
+            matched = true;
+            break;
+          }
+        }
+        if (matched) continue;
+
+        // Default: single character after modifier
         sequences.push(keys.substring(i, i + 3));
         i += 3;
         continue;
       }
 
-      // Check for function keys (F1-F12)
+      // Check for function keys (F1-F12) without modifiers
       if (keys[i] === "F" && i < keys.length - 1) {
         let j = i + 1;
         while (j < keys.length && /\d/.test(keys[j])) {
@@ -83,25 +143,8 @@ class TerminalManager {
         }
       }
 
-      // Check for other special keys
-      const specialKeys = [
-        "Up",
-        "Down",
-        "Left",
-        "Right",
-        "Home",
-        "End",
-        "PageUp",
-        "PageDown",
-        "Escape",
-        "Tab",
-        "BSpace",
-        "DC",
-        "IC",
-        "Enter",
-      ];
+      // Check for other special keys without modifiers
       let foundSpecial = false;
-
       for (const special of specialKeys) {
         if (keys.substring(i).startsWith(special)) {
           sequences.push(special);
@@ -110,12 +153,11 @@ class TerminalManager {
           break;
         }
       }
+      if (foundSpecial) continue;
 
-      if (!foundSpecial) {
-        // Regular character
-        sequences.push(keys[i]);
-        i++;
-      }
+      // Regular character
+      sequences.push(keys[i]);
+      i++;
     }
 
     return sequences;
