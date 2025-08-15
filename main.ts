@@ -97,6 +97,13 @@ class ModularMCPServer {
   async run() {
     const transport = new StdioServerTransport();
     await this.server.connect(transport);
+    await new Promise<void>((resolve) => {
+      const originalOnclose = transport.onclose?.bind(transport);
+      transport.onclose = () => {
+        originalOnclose?.();
+        resolve();
+      };
+    });
   }
 
   async cleanup() {
@@ -161,15 +168,21 @@ if (import.meta.main) {
     Deno.exit(0);
   }
 
-  try {
-    const server = new ModularMCPServer(config, AVAILABLE_TOOLS);
+  const server = new ModularMCPServer(config, AVAILABLE_TOOLS);
+  let exitCode = 0;
 
+  try {
     await server.initialize();
     await server.run();
   } catch (error) {
     console.error(
       `Server error: ${error instanceof Error ? error.message : String(error)}`,
     );
-    Deno.exit(1);
+    exitCode = 1;
+  } finally {
+    await server.cleanup();
+    if (exitCode !== 0) {
+      Deno.exit(exitCode);
+    }
   }
 }
