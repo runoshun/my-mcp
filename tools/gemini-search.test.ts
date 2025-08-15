@@ -1,4 +1,4 @@
-import { assertEquals } from "@std/assert";
+import { assertEquals } from "jsr:@std/assert";
 import { geminiSearchTool } from "./gemini-search.ts";
 
 Deno.test("gemini search tool definition", () => {

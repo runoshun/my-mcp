@@ -1,4 +1,4 @@
-import { assertEquals, assertStringIncludes } from "@std/assert";
+import { assertEquals, assertStringIncludes } from "jsr:@std/assert";
 import { terminalCloseTool, terminalTool } from "./terminal.ts";
 
 type TextContent = { type: string; text: string };
