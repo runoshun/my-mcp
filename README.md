@@ -10,6 +10,36 @@ A modular Model Context Protocol (MCP) server implemented in Deno with a pluggab
 - Integration tests that spawn the real server
 - Works locally with Deno or via mise
 
+## Usage
+### Requirements
+
+- Deno (recommended via mise)
+- For certain tools:
+  - `tmux` (terminal tool)
+  - Google Gemini CLI (gemini-search)
+
+
+### Configuration
+```json
+{
+  "mcpServers": {
+    "modular": {
+      "command": "deno",
+      "args": [
+        "run",
+        "--allow-read",
+        "--allow-write",
+        "--allow-env",
+        "--allow-run",
+        "https://raw.githubusercontent.com/runoshun/my-mcp/refs/tags/v0.1.0/main.ts",
+        "--tools",
+        "gemini-search,terminal"
+      ],
+    }
+  }
+}
+```
+
 ## Architecture
 
 - `main.ts`: Core MCP server using `@modelcontextprotocol/sdk`.
@@ -29,12 +59,6 @@ A modular Model Context Protocol (MCP) server implemented in Deno with a pluggab
 - `documentation`: Package documentation discovery and reading
 - `memory`: Simple knowledge graph (entities, relations, observations)
 
-## Requirements
-
-- Deno (recommended via mise)
-- For certain tools:
-  - `tmux` (terminal tool)
-  - Google Gemini CLI (gemini-search)
 
 ## Install
 
