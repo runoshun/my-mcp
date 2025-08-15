@@ -17,10 +17,12 @@ access, and knowledge graph management.
   - Supports configurable tool loading via CLI arguments
   - Uses stdio transport for MCP communication
 - `tools/`: Modular tool implementations
-  - `tool-interface.ts`: Defines the `ToolModule` interface for plugin architecture
+  - `tool-interface.ts`: Defines the `ToolModule` interface for plugin
+    architecture
   - `mod.ts`: Central registry of available tools
   - Individual tool modules implement specific functionality
-- `main.test.ts`: Integration tests that launch server and test tool functionality
+- `main.test.ts`: Integration tests that launch server and test tool
+  functionality
 - Runtime: Deno with specific permissions for file/network/process access
 
 ### Available Tools

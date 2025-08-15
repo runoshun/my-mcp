@@ -217,58 +217,20 @@ class TerminalManager {
     if (!this.socketPath) {
       throw new Error("Socket path not initialized");
     }
+    if (!keys) {
+      return;
+    }
+
+    const keySequences = this.parseKeySequences(keys);
+    if (keySequences.length === 0) {
+      return;
+    }
 
     // If keyDelay is specified and greater than 0, send keys individually with delay
     if (keyDelay && keyDelay > 0) {
-      // Parse keys to handle special key sequences properly
-      const keySequences = this.parseKeySequences(keys);
-
       for (const keySeq of keySequences) {
-        const args = ["-S", this.socketPath, "send-keys", "-t", sessionName];
-
-        // Check if this is a special key
-        const specialKeys = [
-          "C-",
-          "M-",
-          "F1",
-          "F2",
-          "F3",
-          "F4",
-          "F5",
-          "F6",
-          "F7",
-          "F8",
-          "F9",
-          "F10",
-          "F11",
-          "F12",
-          "Up",
-          "Down",
-          "Left",
-          "Right",
-          "Home",
-          "End",
-          "PageUp",
-          "PageDown",
-          "Escape",
-          "Tab",
-          "BSpace",
-          "DC",
-          "IC",
-          "Enter",
-        ];
-
-        const isSpecialKey = specialKeys.includes(keySeq) ||
-          keySeq.startsWith("C-") ||
-          keySeq.startsWith("M-") ||
-          keySeq.startsWith("F");
-        if (!isSpecialKey && keySeq) {
-          args.push("-l"); // literal flag for regular text
-        }
-        args.push(keySeq);
-
         const process = new Deno.Command("tmux", {
-          args,
+          args: ["-S", this.socketPath, "send-keys", "-t", sessionName, keySeq],
           stdout: "piped",
           stderr: "piped",
         });
@@ -287,48 +249,15 @@ class TerminalManager {
       return;
     }
 
-    // Check if keys contain special key notations
-    const specialKeys = [
-      "C-",
-      "M-",
-      "F1",
-      "F2",
-      "F3",
-      "F4",
-      "F5",
-      "F6",
-      "F7",
-      "F8",
-      "F9",
-      "F10",
-      "F11",
-      "F12",
-      "Up",
-      "Down",
-      "Left",
-      "Right",
-      "Home",
-      "End",
-      "PageUp",
-      "PageDown",
-      "Escape",
-      "Tab",
-      "BSpace",
-      "DC",
-      "IC",
-      "Enter",
-    ];
-
-    const isSpecialKey = specialKeys.some((prefix) => keys.includes(prefix));
-
-    const args = ["-S", this.socketPath, "send-keys", "-t", sessionName];
-    if (!isSpecialKey && keys) {
-      args.push("-l"); // literal flag for regular text
-    }
-    args.push(keys);
-
     const process = new Deno.Command("tmux", {
-      args,
+      args: [
+        "-S",
+        this.socketPath,
+        "send-keys",
+        "-t",
+        sessionName,
+        ...keySequences,
+      ],
       stdout: "piped",
       stderr: "piped",
     });
@@ -463,18 +392,17 @@ Key features:
   - Multiple sessions can be managed independently using different session IDs. Each session maintains its own state (environment variables, working directory).
 
 When sending keys:
-  - Regular text is sent as literal characters (using tmux's -l flag for accuracy)
+  - Special keys and regular characters can be combined. For example, 'vi my_file.txtEscape' opens a file in vi and then sends the Escape key.
   - Special keys are automatically detected and sent as tmux key names:
     * Control keys: C-c, C-d, C-u, C-z, etc.
     * Function keys: F1-F12
     * Navigation: Up, Down, Left, Right, Home, End, PageUp, PageDown
-    * Other: Escape, Tab, BSpace (backspace), DC (delete), IC (insert)
-  - To execute a command, use the 'sendEnter' parameter (recommended) or include a newline
+    * Other: Escape, Tab, BSpace (backspace), DC (delete), IC (insert), Enter
+  - To execute a command, use the 'sendEnter' parameter (recommended) or include an 'Enter' key in the 'keys' string.
 
 Best practices:
   - Use an empty 'keys' parameter to check the current state of the terminal.
-  - Use 'sendEnter=true' to send Enter key after your command (more reliable than adding newline)
-  - For special keys, use tmux notation: "C-c" for Ctrl+C, "C-u" for Ctrl+U, etc.
+  - Use 'sendEnter=true' to execute a command; it's more reliable than adding a newline to 'keys'.
   - Handle errors gracefully, especially for potentially terminated sessions.`,
       inputSchema: {
         type: "object",

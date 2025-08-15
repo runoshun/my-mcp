@@ -335,6 +335,42 @@ Deno.test("terminal execute - readWait parameter bounds", async () => {
   await closeToolDef.execute({ sessionName });
 });
 
+Deno.test("terminal execute - consecutive special keys and command execution", async () => {
+  const tmuxAvailable = await isTmuxAvailable();
+  if (!tmuxAvailable) {
+    console.log("Skipping terminal execute test - tmux not available");
+    return;
+  }
+
+  const terminalToolDef = terminalTool.getToolDefinition();
+  const sessionName = "test-session-consecutive-edit";
+
+  // Run a command to have something in history
+  await terminalToolDef.execute({
+    sessionName,
+    keys: `echo "hello"`,
+    sendEnter: true,
+    readWait: 500,
+  });
+
+  // Go up in history, edit the command and execute it
+  const result = await terminalToolDef.execute({
+    sessionName,
+    keys: `UpEnd" world"`, // Up, End of line, add " world"
+    sendEnter: true,
+    readWait: 500,
+  });
+
+  assertStringIncludes(
+    (result.content as TextContent[])?.[0]?.text || "",
+    "hello world",
+  );
+
+  // Clean up session
+  const closeToolDef = terminalCloseTool.getToolDefinition();
+  await closeToolDef.execute({ sessionName });
+});
+
 Deno.test("terminal cleanup", async () => {
   // Test cleanup function exists and can be called
   if (terminalTool.cleanup) {
