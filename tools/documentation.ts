@@ -98,8 +98,18 @@ export async function findPackagesWithDocs(
   for await (const entry of expandGlob(packageJsonPattern)) {
     if (!entry.isFile) continue;
     const packagePath = dirname(entry.path);
-    const packageJson = JSON.parse(await Deno.readTextFile(entry.path));
-    const packageName = packageJson.name;
+    let packageName: string;
+    try {
+      const packageJson = JSON.parse(await Deno.readTextFile(entry.path));
+      packageName = packageJson.name;
+    } catch (error) {
+      console.warn(
+        `Skipping ${entry.path}: ${
+          error instanceof Error ? error.message : String(error)
+        }`,
+      );
+      continue;
+    }
 
     const docInfo = await findDocumentation(packagePath);
     if (docInfo) {
