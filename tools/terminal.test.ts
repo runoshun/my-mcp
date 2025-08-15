@@ -364,6 +364,47 @@ Deno.test("terminal execute - consecutive special keys and command execution", a
   await closeToolDef.execute({ sessionName });
 });
 
+Deno.test("terminal execute - complex modifier keys", async () => {
+  const tmuxAvailable = await isTmuxAvailable();
+  if (!tmuxAvailable) {
+    console.log("Skipping terminal execute test - tmux not available");
+    return;
+  }
+
+  const terminalToolDef = terminalTool.getToolDefinition();
+  const sessionName = "test-session-complex";
+
+  // Use C-Enter to run two commands in one call
+  const result1 = await terminalToolDef.execute({
+    sessionName,
+    keys: `echo firstC-Enterecho secondEnter`,
+    readWait: 1000,
+  });
+  assertStringIncludes(
+    (result1.content as TextContent[])?.[0]?.text || "",
+    "first",
+  );
+  assertStringIncludes(
+    (result1.content as TextContent[])?.[0]?.text || "",
+    "second",
+  );
+
+  // Use M-Left to edit the previous command
+  const result2 = await terminalToolDef.execute({
+    sessionName,
+    keys: `echo alpha bravoEnterUpM-Left"charlie "Enter`,
+    readWait: 1000,
+  });
+  assertStringIncludes(
+    (result2.content as TextContent[])?.[0]?.text || "",
+    "alpha charlie bravo",
+  );
+
+  // Clean up session
+  const closeToolDef = terminalCloseTool.getToolDefinition();
+  await closeToolDef.execute({ sessionName });
+});
+
 Deno.test("terminal execute - literal option", async () => {
   const tmuxAvailable = await isTmuxAvailable();
   if (!tmuxAvailable) {
