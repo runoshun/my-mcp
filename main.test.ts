@@ -1,4 +1,4 @@
-import { assertEquals, assertExists } from "@std/assert";
+import { assertEquals, assertExists } from "jsr:@std/assert";
 import { Client, StdioClientTransport } from "./deps/mcp-sdk.ts";
 import { AVAILABLE_TOOLS } from "./tools/mod.ts";
 
@@ -156,7 +156,7 @@ Deno.test({
       try {
         const callResult = await client.callTool({
           name: "terminal_execute",
-          arguments: { keys: "echo test", sendEnter: true, readWait: 100 },
+          arguments: { keys: "echo testEnter", readWait: 100 },
         });
 
         assertExists(callResult.content);

@@ -13,10 +13,6 @@ interface ServerConfig {
   listTools?: boolean;
 }
 
-interface ServerConfig {
-  tools?: string[];
-}
-
 class ModularMCPServer {
   private server: Server;
   private toolRegistry: ToolRegistry = new Map();
