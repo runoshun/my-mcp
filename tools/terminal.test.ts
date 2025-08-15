@@ -84,8 +84,7 @@ Deno.test("terminal execute - send command and capture", async () => {
   // Test sending a command
   const result = await terminalToolDef.execute({
     sessionName: "test-session-command",
-    keys: "echo 'Hello World'",
-    sendEnter: true,
+    keys: "echo 'Hello World'Enter",
     readWait: 1000,
   });
 
@@ -120,8 +119,7 @@ Deno.test("terminal execute - auto-generated session name", async () => {
 
   // Test without providing session name
   const result = await terminalToolDef.execute({
-    keys: "pwd",
-    sendEnter: true,
+    keys: "pwdEnter",
     readWait: 500,
   });
 
@@ -158,16 +156,14 @@ Deno.test("terminal execute - session persistence", async () => {
   // First command - change directory to /tmp
   await terminalToolDef.execute({
     sessionName,
-    keys: "cd /tmp",
-    sendEnter: true,
+    keys: "cd /tmpEnter",
     readWait: 500,
   });
 
   // Second command - check current directory (should still be /tmp)
   const result = await terminalToolDef.execute({
     sessionName,
-    keys: "pwd",
-    sendEnter: true,
+    keys: "pwdEnter",
     readWait: 500,
   });
 
@@ -321,8 +317,7 @@ Deno.test("terminal execute - readWait parameter bounds", async () => {
   const start = Date.now();
   await terminalToolDef.execute({
     sessionName,
-    keys: "echo 'test'",
-    sendEnter: true,
+    keys: "echo 'test'Enter",
     readWait: 50000, // Should be capped at 30000
   });
   const elapsed = Date.now() - start;
@@ -348,22 +343,48 @@ Deno.test("terminal execute - consecutive special keys and command execution", a
   // Run a command to have something in history
   await terminalToolDef.execute({
     sessionName,
-    keys: `echo "hello"`,
-    sendEnter: true,
+    keys: `echo "hello"Enter`,
     readWait: 500,
   });
 
   // Go up in history, edit the command and execute it
   const result = await terminalToolDef.execute({
     sessionName,
-    keys: `UpEnd" world"`, // Up, End of line, add " world"
-    sendEnter: true,
+    keys: `UpEnd" world"Enter`, // Up, End of line, add " world"
     readWait: 500,
   });
 
   assertStringIncludes(
     (result.content as TextContent[])?.[0]?.text || "",
     "hello world",
+  );
+
+  // Clean up session
+  const closeToolDef = terminalCloseTool.getToolDefinition();
+  await closeToolDef.execute({ sessionName });
+});
+
+Deno.test("terminal execute - literal option", async () => {
+  const tmuxAvailable = await isTmuxAvailable();
+  if (!tmuxAvailable) {
+    console.log("Skipping terminal execute test - tmux not available");
+    return;
+  }
+
+  const terminalToolDef = terminalTool.getToolDefinition();
+  const sessionName = "test-session-literal";
+
+  // Send "Up" with literal: true. It should type "Up" instead of moving the cursor up.
+  const result = await terminalToolDef.execute({
+    sessionName,
+    keys: "Up",
+    literal: true,
+    readWait: 500,
+  });
+
+  assertStringIncludes(
+    (result.content as TextContent[])?.[0]?.text || "",
+    "Up",
   );
 
   // Clean up session

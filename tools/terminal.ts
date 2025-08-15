@@ -212,12 +212,37 @@ class TerminalManager {
   private async sendKeysToSession(
     sessionName: string,
     keys: string,
-    keyDelay?: number,
+    keyDelay: number | undefined,
+    literal: boolean,
   ): Promise<void> {
     if (!this.socketPath) {
       throw new Error("Socket path not initialized");
     }
     if (!keys) {
+      return;
+    }
+
+    if (literal) {
+      const process = new Deno.Command("tmux", {
+        args: [
+          "-S",
+          this.socketPath,
+          "send-keys",
+          "-l",
+          "-t",
+          sessionName,
+          keys,
+        ],
+        stdout: "piped",
+        stderr: "piped",
+      });
+      const { code, stderr } = await process.output();
+      if (code !== 0) {
+        const error = new TextDecoder().decode(stderr);
+        throw new Error(
+          `Failed to send literal keys to session ${sessionName}: ${error}`,
+        );
+      }
       return;
     }
 
@@ -298,8 +323,8 @@ class TerminalManager {
     sessionName: string | undefined,
     keys: string,
     readWait: number,
-    sendEnter: boolean,
-    keyDelay?: number,
+    keyDelay: number | undefined,
+    literal: boolean,
     terminalSize?: { width: number; height: number },
   ): Promise<{ sessionName: string; output: string }> {
     const actualSessionName = await this.getOrCreateSession(
@@ -307,14 +332,8 @@ class TerminalManager {
       terminalSize,
     );
 
-    if (keys || sendEnter) {
-      if (keys) {
-        await this.sendKeysToSession(actualSessionName, keys, keyDelay);
-      }
-
-      if (sendEnter) {
-        await this.sendKeysToSession(actualSessionName, "Enter");
-      }
+    if (keys) {
+      await this.sendKeysToSession(actualSessionName, keys, keyDelay, literal);
 
       // Wait for command to execute
       await new Promise((resolve) =>
@@ -393,16 +412,17 @@ Key features:
 
 When sending keys:
   - Special keys and regular characters can be combined. For example, 'vi my_file.txtEscape' opens a file in vi and then sends the Escape key.
+  - To execute a command, include the 'Enter' key at the end of your 'keys' string.
   - Special keys are automatically detected and sent as tmux key names:
     * Control keys: C-c, C-d, C-u, C-z, etc.
     * Function keys: F1-F12
     * Navigation: Up, Down, Left, Right, Home, End, PageUp, PageDown
     * Other: Escape, Tab, BSpace (backspace), DC (delete), IC (insert), Enter
-  - To execute a command, use the 'sendEnter' parameter (recommended) or include an 'Enter' key in the 'keys' string.
 
 Best practices:
   - Use an empty 'keys' parameter to check the current state of the terminal.
-  - Use 'sendEnter=true' to execute a command; it's more reliable than adding a newline to 'keys'.
+  - To run a command, end your 'keys' string with the 'Enter' key.
+  - To send a string that could be interpreted as a special key, use the 'literal: true' option.
   - Handle errors gracefully, especially for potentially terminated sessions.`,
       inputSchema: {
         type: "object",
@@ -425,16 +445,16 @@ Best practices:
             description:
               "The key-strokes to send to the terminal. If empty, only captures the current output.",
           },
-          sendEnter: {
-            type: "boolean",
-            description:
-              "Whether to send an Enter key (newline) after the keys. Useful when Claude Code trims trailing newlines.",
-            default: false,
-          },
           keyDelay: {
             type: "number",
             description:
               "Delay in milliseconds between individual key presses. Useful for slow applications or when precise timing is needed.",
+          },
+          literal: {
+            type: "boolean",
+            description:
+              "If true, sends the keys string literally, without parsing for special key names. Default is false.",
+            default: false,
           },
           terminalSize: {
             type: "object",
@@ -461,15 +481,15 @@ Best practices:
           sessionName,
           readWait = 1000,
           keys = "",
-          sendEnter = false,
           keyDelay,
+          literal = false,
           terminalSize,
         } = args as {
           sessionName?: string;
           readWait?: number;
           keys?: string;
-          sendEnter?: boolean;
           keyDelay?: number;
+          literal?: boolean;
           terminalSize?: { width: number; height: number };
         };
 
@@ -478,8 +498,8 @@ Best practices:
           sessionName,
           keys,
           readWait,
-          sendEnter,
           keyDelay,
+          literal,
           terminalSize,
         );
 
